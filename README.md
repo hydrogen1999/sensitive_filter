@@ -1,2 +1,2 @@
-# sensitive_content_fillter
-sensitive content fillter
+# sensitive_content_filter
+sensitive content filter
