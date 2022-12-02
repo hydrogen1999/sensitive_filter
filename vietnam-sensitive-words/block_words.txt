@@ -17,7 +17,6 @@ xxx
 mupvl
 xnxx
 lồn
-lon
 loz
 lz
 cặc
@@ -26,12 +25,13 @@ buồi
 bướm
 bím
 đm
-dm
 dkm
 dkmm
 đcm
-dcmm
+dcm
 vl
+vldcmm
+vl dcmm
 vcl
 vcc
 vailz
