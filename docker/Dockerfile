@@ -1,5 +1,7 @@
 FROM python:3.9-slim-bullseye
 
+RUN pip install torch # Cache torch
+
 COPY requirements.txt .
 
 RUN pip install -r requirements.txt
