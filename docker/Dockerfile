@@ -5,8 +5,6 @@ RUN pip install torch # Cache torch
 COPY requirements.txt .
 
 RUN pip install -r requirements.txt
-RUN pip install uvicorn
-RUN pip install tensorflow
 
 RUN mkdir /app
 WORKDIR /app
