@@ -3,12 +3,9 @@ import torch.nn as nn
 import re
 import string
 import pickle
-from fastapi import FastAPI 
+from fastapi import FastAPI
 from ultils import *
 from model.model import SensitiveClassifier
-import gdown
-
-
 
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
@@ -18,9 +15,12 @@ app = FastAPI(
     version="0.1",
 )
 # load lib sensitive
-with open('./vietnam-sensitive-words/profanity_wordlist.txt', 'r', encoding="utf8") as f:
+with open('./vietnam-sensitive-words/profanity_wordlist.txt',
+          'r',
+          encoding="utf8") as f:
     list_bad_words = [word[:-1] for word in f]
-with open('./vietnam-sensitive-words/block_words.txt', 'r', encoding="utf8") as f:
+with open('./vietnam-sensitive-words/block_words.txt', 'r',
+          encoding="utf8") as f:
     block_words = [word[:-1] for word in f]
 with open('./domain_shorteners/domain_shorteners.txt', 'r') as f:
     domain_shorteners = [domain[:-1] for domain in f]
@@ -29,19 +29,13 @@ with open('./scam-links/links.txt', 'r') as f:
 scam = scam_links + domain_shorteners
 list_bad_words = list_bad_words + scam
 
-# load the sentiment model
-url = 'https://drive.google.com/drive/u/1/folders/1l4sE2Go2WffyIKA5rqRHwoQbn5nWfJhl'
-output = 'phobert_fold3.pth'
-gdown.download(url, output, quiet=False)
+# Load model
 model = SensitiveClassifier(n_classes=2)
 model.to(device)
-model.load_state_dict(torch.load('phobert_fold3.pth', map_location=torch.device(device)))
+model.load_state_dict(
+    torch.load('phobert_fold3.pth', map_location=torch.device(device)))
 
-# Download
-url = 'https://drive.google.com/drive/u/1/folders/1l4sE2Go2WffyIKA5rqRHwoQbn5nWfJhl'
-output = 'tokenizer.pickle'
-gdown.download(url, output, quiet=False)
-
+#Load tokenizer
 with open('tokenizer.pickle', 'rb') as handle:
     tokenizer = pickle.load(handle)
 # load stopwords vn
@@ -50,6 +44,7 @@ with open("./vietnamese.txt", 'r', encoding="utf8") as f:
 len(stop_words)
 
 # cleaning the data
+
 
 def clean_text(text):
     '''Make text lowercase, remove text in square brackets,remove links,remove punctuation
@@ -62,6 +57,8 @@ def clean_text(text):
     text = re.sub('\n', '', text)
     text = re.sub('\w*\d\w*', '', text)
     return text
+
+
 def preprocess_data(text):
     # Clean puntuation, urls, and so on
     text = clean_text(text)
@@ -89,5 +86,6 @@ def predict_sentiment(text: str):
         # show results
         result = {"cleaned_text": text, "Sensitive": int(y_pred)}
         return result
-    
+
+
 #uvicorn main:app --host 0.0.0.0 --port 8000
