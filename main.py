@@ -1,11 +1,16 @@
-import keras
-from keras_preprocessing.sequence import pad_sequences
-import nltk
+import torch
+import torch.nn as nn
 import re
 import string
 import pickle
 from fastapi import FastAPI 
-from ultils import CheckBadWords, remove_accent
+from ultils import *
+from model.model import SensitiveClassifier
+import gdown
+
+
+
+device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
 app = FastAPI(
     title="Sensitive content filter API",
@@ -25,12 +30,27 @@ scam = scam_links + domain_shorteners
 list_bad_words = list_bad_words + scam
 
 # load the sentiment model
-model = keras.models.load_model('./checkpoints/model_name.h5')
+url = 'https://drive.google.com/drive/u/1/folders/1l4sE2Go2WffyIKA5rqRHwoQbn5nWfJhl'
+output = 'phobert_fold3.pth'
+gdown.download(url, output, quiet=False)
+model = SensitiveClassifier(n_classes=2)
+model.to(device)
+model.load_state_dict(torch.load('phobert_fold3.pth', map_location=torch.device(device)))
+
+# Download
+url = 'https://drive.google.com/drive/u/1/folders/1l4sE2Go2WffyIKA5rqRHwoQbn5nWfJhl'
+output = 'tokenizer.pickle'
+gdown.download(url, output, quiet=False)
+
 with open('tokenizer.pickle', 'rb') as handle:
-        word_tokenizer = pickle.load(handle)
+    tokenizer = pickle.load(handle)
+# load stopwords vn
+with open("./vietnamese.txt", 'r', encoding="utf8") as f:
+    stop_words = [word[:-1] for word in f]
+len(stop_words)
 
 # cleaning the data
-stemmer = nltk.SnowballStemmer("english")
+
 def clean_text(text):
     '''Make text lowercase, remove text in square brackets,remove links,remove punctuation
     and remove words containing numbers.'''
@@ -45,44 +65,29 @@ def clean_text(text):
 def preprocess_data(text):
     # Clean puntuation, urls, and so on
     text = clean_text(text)
-    # Stemm all the words in the sentence
-    text = ' '.join(stemmer.stem(word) for word in text.split(' '))
-    
+    # Remove stopwords
+    text = ' '.join(word for word in text.split(' ') if word not in stop_words)
     return text
 
-def embed(corpus): 
-    return word_tokenizer.texts_to_sequences(corpus)
 
 @app.get("/predict-text")
-def predict_sentiment(text: str, AI: int):
+def predict_sentiment(text: str):
     """
     A simple function that receive a text content and predict the sentiment of the content.
     :param text:
     :return: prediction, probabilities
     """
     badwords_censor = CheckBadWords(list_bad_words, block_words)
-    text = badwords_censor(text)
-    if re.search("\*", text):
-        result = {"cleaned_text": text, "Sensitive": 1, "Score": 0.99}
+    if badwords_censor(text) == 1:
+        result = {"text": text, "Sensitive": 1}
         return result
     else:
-        if AI == 1:
-            # # clean the text
-            cleaned_text = preprocess_data(text)
-            input_model =  pad_sequences(
-                    embed([cleaned_text]), 
-                    219
-                    )
-            
-            # perform prediction
-            y_pred = model.predict(input_model).astype("int32")[0][0].tolist()
-            y_prob = 0.8
-            
-            # output dictionary
-            sentiments = {0: "Negative", 1: "Positive"}
-            
-            # show results
-            result = {"cleaned_text": cleaned_text, "Sensitive": y_pred, "Score": y_prob}
-        else:
-            result = {"cleaned_text": text, "Sensitive": 0, "Score": 0.99}
+        # # clean the text
+        text = clean_text(text)
+        y_pred = infer(text, tokenizer, model)[0]
+        print("pred: ", y_pred)
+        # show results
+        result = {"cleaned_text": text, "Sensitive": int(y_pred)}
         return result
+    
+#uvicorn main:app --host 0.0.0.0 --port 8000
