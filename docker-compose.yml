@@ -3,6 +3,9 @@ version: "3.7"
 services:
   scf:
     image: sensitive-content-filter:1.0.0
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
     ports:
       - 10020:80
     container_name: sensitive-content-filter
