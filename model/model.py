@@ -4,7 +4,8 @@ from transformers import AutoModel
 class SensitiveClassifier(nn.Module):
     def __init__(self, n_classes):
         super(SensitiveClassifier, self).__init__()
-        self.bert = AutoModel.from_pretrained("vinai/phobert-base")
+        self.bert = AutoModel.from_pretrained("vinai/phobert-base", local_files_only=True)
+
         self.drop = nn.Dropout(p=0.3)
         self.fc = nn.Linear(self.bert.config.hidden_size, n_classes)
         nn.init.normal_(self.fc.weight, std=0.02)
