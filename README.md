@@ -1,5 +1,5 @@
 # sensitive_content_filter
-### Task
+### Done:
 - Filter sensitive Vietnamese words using rule base
 - Build model Bi-LSTM, PhoBert
 - Webapp for test: 10.10.1.37:10021
