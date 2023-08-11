@@ -4,6 +4,7 @@ import re
 import string
 import pickle
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from ultils import *
 from model.model import SensitiveClassifier
 
@@ -14,6 +15,17 @@ app = FastAPI(
     description="Test lọc nội dung nhạy cảm",
     version="0.1",
 )
+
+origins = ["*"]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"]
+)
+
 # load lib sensitive
 with open('./vietnam-sensitive-words/profanity_wordlist.txt',
           'r',
@@ -76,15 +88,14 @@ def predict_sentiment(text: str):
     """
     badwords_censor = CheckBadWords(list_bad_words, block_words)
     if badwords_censor(text) == 1:
-        result = {"text": text, "Sensitive": 1}
+        result = {"Original": text, "Sensitive": 1}
         return result
     else:
         # # clean the text
-        text = clean_text(text)
-        y_pred = infer(text, tokenizer, model)[0]
-        print("pred: ", y_pred)
+        cleaned_text = preprocess_data(text)
+        out = infer(text, tokenizer, model)
         # show results
-        result = {"cleaned_text": text, "Sensitive": int(y_pred)}
+        result = {"Original":text,"Probability": float(out[0][0]), "Sensitive": int(out[1][0])}
         return result
 
 

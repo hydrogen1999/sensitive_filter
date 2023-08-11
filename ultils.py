@@ -1,6 +1,7 @@
 import unidecode
 import re
 import torch
+import torch.nn.functional as F
 
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
@@ -48,5 +49,8 @@ def infer(text, tokenizer, model, max_len=120):
     attention_mask = encoded_review['attention_mask'].to(device)
 
     output = model(input_ids, attention_mask)
+    probabilities = F.softmax(output, dim=-1)
+    probabilities = torch.max(probabilities, dim=1)
     _, y_pred = torch.max(output, dim=1)
-    return y_pred
+    output = [probabilities, y_pred]
+    return output
