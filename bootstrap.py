@@ -5,7 +5,7 @@ AutoModel.from_pretrained("vinai/phobert-base")
 
 # Download the sensitive model
 url = 'https://drive.google.com/u/0/uc?id=1P_x0jQlxTrbeOCatv2xYtDqMyPfgrxLk&export=download'
-output = 'phobert_fold3.pth'
+output = './checkpoints/phobert_fold3.pth'
 gdown.download(url, output, quiet=False)
 
 # Download tokenizer
